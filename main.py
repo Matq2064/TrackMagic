@@ -14,7 +14,6 @@ User ID 243713302750953482 on https://discord.id/ & https://lookup.guru/
 
 import pytube
 import ffmpy
-import atexit
 import os
 records = {}
 RECORDS_FILE = 'records'
@@ -231,6 +230,8 @@ forms = {'v': 'video', 'p': 'playlist'}
 
 
 def main():
+    cleanup_temp()
+
     if not os.path.exists(RECORDS_FILE):
         with open(RECORDS_FILE, 'w', encoding='utf-8') as f:
             f.write('')
@@ -255,7 +256,6 @@ def main():
             video_id = result['video_id']
             records[video_id] = result
     print(f'Found {len(records)} records.')
-    atexit.register(cleanup_temp)
 
     while True:
         try:
@@ -271,11 +271,11 @@ def main():
                 print(f'Enter {form_name} url')
                 url = input('> ')
 
-            if form[0] == 'p':
-                process_playlist(url)
-            elif form[0] == 'v':
-                session = pytube.YouTube(url=url)
-                process_video(session)
+                if form[0] == 'p':
+                    process_playlist(url)
+                elif form[0] == 'v':
+                    session = pytube.YouTube(url=url)
+                    process_video(session)
         except Exception as e:
             print(f'{RED}{e}{RESETCOLOR}')
 
