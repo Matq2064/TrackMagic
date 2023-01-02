@@ -38,38 +38,16 @@ UNUNDERLINE = '\033[24m'
 BOLD = '\033[1m'
 UNBOLD = '\033[2m'
 
-if not os.path.exists(RECORDS_FILE):
-    with open(RECORDS_FILE, 'w', encoding='utf-8') as f:
-        f.write('')
-
-with open(RECORDS_FILE, 'r', encoding='utf-8') as f:
-    content = f.read()
-containers = [[attr for attr in container.splitlines() if attr] for container in content.split(RECORD_SEPERATOR)]
-for container in containers:
-    result = {}
-    for attribute in container:
-        seperate_at = attribute.find('=')
-        key = attribute[:seperate_at]
-        value = attribute[seperate_at+1:]
-        if value == 'None':
-            value = None
-        elif value == 'False':
-            value = False
-        elif value == 'True':
-            value = True
-        result[key] = value
-    if 'video_id' in result:
-        video_id = result['video_id']
-        records[video_id] = result
-print(f'Found {len(records)} records.')
-
 
 def cleanup_temp():
-    if os.path.exists(TEMP_DIR):
-        os.remove(TEMP_DIR)
-
-
-atexit.register(cleanup_temp())
+    path = f'{os.getcwd()}\\{TEMP_DIR}'
+    if os.path.exists(path):
+        for subdir in os.listdir(path):
+            subdir = f'{path}{subdir}\\'
+            for file in os.listdir(subdir):
+                os.remove(subdir+file)
+            os.rmdir(subdir)
+        os.rmdir(path)
 
 
 def background_color(r: int, g: int, b: int):
@@ -250,24 +228,57 @@ def merge_video_audio(video_path: str, audio_path: str):
 
 
 forms = {'v': 'video', 'p': 'playlist'}
-while True:
-    try:
-        print('Process [P]laylist or [V]ideo')
-        form = input('> ').lower()
 
-        if not form[0] in forms:
-            print('Invalid form')
-            continue
 
-        if form[0] in 'pv':
-            form_name = forms[form[0]]
-            print(f'Enter {form_name} url')
-            url = input('> ')
+def main():
+    if not os.path.exists(RECORDS_FILE):
+        with open(RECORDS_FILE, 'w', encoding='utf-8') as f:
+            f.write('')
 
-        if form[0] == 'p':
-            process_playlist(url)
-        elif form[0] == 'v':
-            session = pytube.YouTube(url=url)
-            process_video(session)
-    except Exception as e:
-        print(f'{RED}{e}{RESETCOLOR}')
+    with open(RECORDS_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+    containers = [[attr for attr in container.splitlines() if attr] for container in content.split(RECORD_SEPERATOR)]
+    for container in containers:
+        result = {}
+        for attribute in container:
+            seperate_at = attribute.find('=')
+            key = attribute[:seperate_at]
+            value = attribute[seperate_at + 1:]
+            if value == 'None':
+                value = None
+            elif value == 'False':
+                value = False
+            elif value == 'True':
+                value = True
+            result[key] = value
+        if 'video_id' in result:
+            video_id = result['video_id']
+            records[video_id] = result
+    print(f'Found {len(records)} records.')
+    atexit.register(cleanup_temp)
+
+    while True:
+        try:
+            print('Process [P]laylist or [V]ideo')
+            form = input('> ').lower()
+
+            if not form[0] in forms:
+                print('Invalid form')
+                continue
+
+            if form[0] in 'pv':
+                form_name = forms[form[0]]
+                print(f'Enter {form_name} url')
+                url = input('> ')
+
+            if form[0] == 'p':
+                process_playlist(url)
+            elif form[0] == 'v':
+                session = pytube.YouTube(url=url)
+                process_video(session)
+        except Exception as e:
+            print(f'{RED}{e}{RESETCOLOR}')
+
+
+if __name__ == '__main__':
+    main()
