@@ -59,7 +59,7 @@ for container in containers:
     if 'video_id' in result:
         video_id = result['video_id']
         records[video_id] = result
-print(f'Found {len(records)} records found.')
+print(f'Found {len(records)} records.')
 
 
 def background_color(r: int, g: int, b: int):
@@ -149,6 +149,11 @@ def process_video(session: pytube.YouTube):
     sorted_streams = sorted(video_streams, key=lambda s: int(s.resolution[:len(s.resolution)-1]), reverse=True)
     video_stream = sorted_streams[0]
     print(f'Video stream {video_stream}')
+
+    if not os.path.exists(VIDEO_DIR):
+        os.mkdir(VIDEO_DIR)
+    if not os.path.exists(TRACK_DIR):
+        os.mkdir(TRACK_DIR)
 
     progressive = stream_is_progressive(video_stream)
     if progressive:
