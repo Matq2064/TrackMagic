@@ -14,14 +14,16 @@ User ID 243713302750953482 on https://discord.id/ & https://lookup.guru/
 
 import pytube
 import ffmpy
+import atexit
 import os
 records = {}
 RECORDS_FILE = 'records'
 RECORD_SEPERATOR = '-= End of record =-\n'
 VIDEO_DIR = 'Videos\\'
 TRACK_DIR = 'Tracks\\'
-TEMP_VIDEO_DIR = 'Temp\\Video\\'
-TEMP_TRACK_DIR = 'Temp\\Track\\'
+TEMP_DIR = 'Temp\\'
+TEMP_VIDEO_DIR = TEMP_DIR + 'Video\\'
+TEMP_TRACK_DIR = TEMP_DIR + 'Track\\'
 os.system('')
 GREEN = '\033[32m'
 YELLOW = '\033[33m'
@@ -60,6 +62,14 @@ for container in containers:
         video_id = result['video_id']
         records[video_id] = result
 print(f'Found {len(records)} records.')
+
+
+def cleanup_temp():
+    if os.path.exists(TEMP_DIR):
+        os.remove(TEMP_DIR)
+
+
+atexit.register(cleanup_temp())
 
 
 def background_color(r: int, g: int, b: int):
