@@ -64,6 +64,9 @@ def list_records(output_records: dict):
         id_text = f'{UNDERLINE}{video_id}{UNUNDERLINE}'
         msg.append(id_text)
 
+        if 'length' in current_record and current_record['length'] is not None:
+            msg.append(f'{current_record["length"]}')
+
         if 'progressive' in current_record and current_record['progressive'] is not None:
             msg.append(f'{(f"{MAGENTA}Interlaced{RESETCOLOR}", f"{CYAN}Progressive{RESETCOLOR}")[current_record["progressive"]]}')
 
@@ -103,10 +106,7 @@ def process_playlist(playlist_url: str):
         else:
             background_color(30, 30, 30)
 
-        try:
-            process_video(session)
-        except Exception as e:
-            print(f"{RED}Couldn't process video {session.title}\n{e}{RESETCOLOR}")
+        process_video(session)
 
 
 def process_video(session: pytube.YouTube):
@@ -119,6 +119,10 @@ def process_video(session: pytube.YouTube):
             msg.append(f'{BOLD}{records[video_id]["title"]}{UNBOLD}')
 
         msg.append(id_text)
+
+        if 'length' in records[video_id] and records[video_id]['length'] is not None:
+            msg.append(f'{records[video_id]["length"]}')
+
         if 'progressive' in records[video_id] and records[video_id]['progressive'] is not None:
             msg.append(f'{(f"{MAGENTA}Interlaced{RESETCOLOR}", f"{CYAN}Progressive{RESETCOLOR}")[records[video_id]["progressive"]]}')
 
@@ -129,6 +133,10 @@ def process_video(session: pytube.YouTube):
             title = session.title
             records[video_id]['title'] = title
             print(f'{YELLOW}Updated title to {title}{RESETCOLOR}')
+        if 'length' not in records[video_id] or records[video_id]['length'] is None:
+            length = session.length
+            records[video_id]['length'] = length
+            print(f'{YELLOW}Updated length to {length}{RESETCOLOR}')
         if 'progressive' not in records[video_id] or records[video_id]['progressive'] is None:
             video_streams = session.streams.filter(type='video')
             sorted_streams = sorted(video_streams, key=lambda s: int(s.resolution[:len(s.resolution) - 1]), reverse=True)
@@ -141,7 +149,8 @@ def process_video(session: pytube.YouTube):
 
     next_index = len(records)
     title = session.title
-    msg = [f'{BOLD}{title}{UNBOLD}', id_text, f'{YELLOW}Processing video at #{next_index}{RESETCOLOR}']
+    length = session.length
+    msg = [f'{BOLD}{title}{UNBOLD}', id_text, f'{length}', f'{YELLOW}Processing video at #{next_index}{RESETCOLOR}']
     print(' | '.join(msg))
 
     if session.age_restricted:
@@ -151,7 +160,7 @@ def process_video(session: pytube.YouTube):
     all_streams = session.streams
 
     video_streams = all_streams.filter(type='video')
-    sorted_streams = sorted(video_streams, key=lambda s: int(s.resolution[:len(s.resolution)-1]), reverse=True)
+    sorted_streams = sorted([stream for stream in video_streams if stream._filesize != 0], key=lambda s: int(s.resolution[:len(s.resolution)-1]), reverse=True)
     video_stream = sorted_streams[0]
     print(f'Video stream {video_stream}')
 
@@ -177,6 +186,7 @@ def process_video(session: pytube.YouTube):
     record = records[video_id]
     record['video_id'] = video_id
     record['title'] = title
+    record['length'] = length
     record['progressive'] = progressive
     record['last_changed'] = None
     record['video'] = video_path
@@ -276,33 +286,29 @@ def main():
     print(f'Found {len(records)} records.')
 
     while True:
-        try:
-            print('\n'
-                  'Process [P]laylist or [V]ideo\n'
-                  'List [R]ecords')
-            user_choice = input('> ').lower()
+        print('\n'
+              'Process [P]laylist or [V]ideo\n'
+              'List [R]ecords')
+        user_choice = input('> ').lower()
 
-            if not user_choice:
-                continue
+        if not user_choice:
+            continue
 
-            first_char = user_choice[0]
-            if first_char in 'pv':
-                form_name = forms[first_char]
-                print(f'Enter {form_name} url')
-                url = input('> ')
+        first_char = user_choice[0]
+        if first_char in 'pv':
+            form_name = forms[first_char]
+            print(f'Enter {form_name} url')
+            url = input('> ')
 
-                if first_char == 'p':
-                    process_playlist(url)
-                elif first_char == 'v':
-                    session = pytube.YouTube(url=url)
-                    process_video(session)
-            elif first_char in 'r':
-                list_records(records)
-            else:
-                print('Selection not found')
-
-        except Exception as e:
-            print(f'{RED}{e}{RESETCOLOR}')
+            if first_char == 'p':
+                process_playlist(url)
+            elif first_char == 'v':
+                session = pytube.YouTube(url=url)
+                process_video(session)
+        elif first_char in 'r':
+            list_records(records)
+        else:
+            print('Selection not found')
 
 
 if __name__ == '__main__':
