@@ -3,7 +3,7 @@
 Idk maybe u want to download a few videos to keep them or smth
 ### How it work??
 Open the main.py file and follow the instructions by giving a video/playlist link and the application will start downloading from youtube.
-The output folders are `Video` and `Track.`
+The output folders are `Video` and `Audio.`
 
 ## Setup this thing
 ### To get dependencies
