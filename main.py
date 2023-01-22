@@ -53,25 +53,14 @@ def background_color(r: int, g: int, b: int):
     print(f'\033[48;2;{r};{g};{b}m', end='')
 
 
-def list_records(output_records: dict):
-    for video_id in output_records:
-        current_record = output_records[video_id]
+def input_choice(choices, transform, prompt):
+    while True:
+        user_input = transform(input(prompt))
+        if not user_input:
+            continue
 
-        msg = []
-        if 'title' in current_record and current_record['title'] is not None:
-            msg.append(f'{BOLD}{current_record["title"]}{UNBOLD}')
-
-        id_text = f'{UNDERLINE}{video_id}{UNUNDERLINE}'
-        msg.append(id_text)
-
-        if 'length' in current_record and current_record['length'] is not None:
-            msg.append(f'{current_record["length"]}')
-
-        if 'progressive' in current_record and current_record['progressive'] is not None:
-            msg.append(f'{(f"{MAGENTA}Interlaced{RESETCOLOR}", f"{CYAN}Progressive{RESETCOLOR}")[current_record["progressive"]]}')
-
-        msg.append(f'{GREEN}#{list(records.keys()).index(video_id)}{RESETCOLOR}')
-        print(' | '.join(msg))
+        if user_input in choices:
+            return user_input
 
 
 def update_records():
@@ -109,7 +98,12 @@ def stream_is_progressive(stream: pytube.Stream):
 #         process_video(session)
 
 
-def process_video(session: pytube.YouTube):
+def process_video(video_string: str):
+    try: session = pytube.YouTube(url=video_string)
+    except:
+        try: session = pytube.YouTube(url=f'https://www.youtube.com/watch?v={video_string}')
+        except: print('Invalid video string supplied'); return
+
     video_id = session.video_id
     id_text = f'{UNDERLINE}{video_id}{UNUNDERLINE}'
 
@@ -152,9 +146,9 @@ def process_video(session: pytube.YouTube):
     if audio_exists: print(f'{UNDERLINE}Audio | itag {audio_itag} | "{audio_path}"{UNUNDERLINE}')
     else: print(f'{UNDERLINE}No audio found{UNUNDERLINE}')
 
-    if not video_exists: get_video = input('Video [Y]es or [N]o: ')[0].lower() == 'y'
+    if not video_exists: get_video = input_choice(['y', 'n'], lambda x: x.lower(), 'Video [Y]es or [N]o: ') == 'y'
     else: get_video = False
-    if not audio_exists: get_audio = input('Audio [Y]es or [N]o: ')[0].lower() == 'y'
+    if not audio_exists: get_audio = input_choice(['y', 'n'], lambda x: x.lower(), 'Audio [Y]es or [N]o: ') == 'y'
     else: get_audio = False
 
     if video_exists and audio_exists:
@@ -347,13 +341,12 @@ def main():
         first_char = user_choice[0]
         if first_char in 'v':
             form_name = forms[first_char]
-            print(f'Enter {form_name} url')
-            url = input('> ')
+            print(f'Enter {form_name} url or id')
+            video_string = input('> ')
 
             print()
             if first_char == 'v':
-                session = pytube.YouTube(url=url)
-                process_video(session)
+                process_video(video_string)
         elif first_char in 'r':
             list_records(records)
         else:
